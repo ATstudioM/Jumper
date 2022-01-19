@@ -3,6 +3,7 @@
 # А вот и кастомный шрифт: https://fonts-online.ru/fonts/comic-cat/download
 # Логотип сделан мной лично (Адель Матыгуллин :)
 
+import sqlite3
 import pygame
 import pygame_gui
 import os
@@ -19,7 +20,9 @@ jumps = 0
 in_menu = 1
 manager = pygame_gui.UIManager((400, 600))
 manager2 = pygame_gui.UIManager((400, 600))
-manager3 = pygame_gui.UIManager((400, 600))  # !
+manager3 = pygame_gui.UIManager((400, 600))
+manager4 = pygame_gui.UIManager((400, 600))
+
 fullname = os.path.join('data/logo.png')
 image = pygame.image.load(fullname)
 loading = 'data/map.txt'
@@ -185,6 +188,51 @@ def show_message(screen, message, message2):
     screen.blit(text, (text_x, text_y))
 
 
+def update_leaders(level_name: str, player_name: str, jumps_count: int):
+    base_conn = sqlite3.connect("data/leaders.db")
+    base_cursor = base_conn.cursor()
+    base_cursor.execute("""CREATE TABLE IF NOT EXISTS jump_leaders(level_name text, player_name text, jumps_count
+    int)""")
+    base_values = (str(level_name), str(player_name), int(jumps_count))
+    base_querry = "select * from jump_leaders"
+    base_cursor.execute(base_querry)
+    base_players = base_cursor.fetchall()
+    curr_player = ()
+
+    # это конечно, &*$!ец, но вариант с WHERE у меня почему-то не работал (
+    for i in base_players:
+        if str(i[1]) == player_name and str(i[0]) == level_name:
+            curr_player = i
+            break
+
+    if curr_player:
+        if jumps_count < int(curr_player[2]):
+            # А тут работает, вот это приколы
+            base_cursor.execute("UPDATE jump_leaders SET jumps_count=" + str(
+                jumps_count) + " WHERE player_name='" + player_name + "' AND level_name='" + level_name + "'")
+            base_conn.commit()
+        return False
+    else:
+
+        base_cursor.execute("INSERT INTO jump_leaders VALUES(?, ?, ?);", base_values)
+        base_conn.commit()
+    base_cursor.close()
+    base_conn.close()
+
+
+def get_leaders(level_name: str) -> list:
+    base_conn = sqlite3.connect("data/leaders.db")
+    base_cursor = base_conn.cursor()
+    base_players = "SELECT * FROM jump_leaders WHERE level_name='" + level_name + "'"
+    base_cursor.execute(base_players)
+    leaders_main = base_cursor.fetchall()
+    if len(leaders_main) >= 15:
+        leaders_main = leaders_main[0:14]
+    elif not leaders_main:
+        pass
+    return leaders_main
+
+
 def main():
     global loading, in_menu, skin, jumps, name
     screen = pygame.display.set_mode(WINDOW_SIZE)
@@ -211,9 +259,11 @@ def main():
                     else:
                         say = 'прыжков'
                     show_message(screen, "Вы достигли финиша!", f"Это заняло {jumps} {say}!")
+                    lvl_name = loading[5:-4]
                     if event.type == pygame.USEREVENT:
                         if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                             if event.ui_element == back:
+                                update_leaders(lvl_name, name, jumps)
                                 game_over = False
                                 in_menu = 1
                                 jumps = 0
@@ -251,11 +301,16 @@ def main():
                             game = Game(map, hero)
                             game.render(screen)
                             in_menu = 0
+
+                        if event.ui_element == top2:
+                            in_menu = 3
                         if event.ui_element == top:
                             in_menu = 2
+
                     if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                         name = event.text
                         print(name)
+
                 screen.fill((255, 255, 255))
                 manager.draw_ui(screen)
                 screen.blit(image, (20, -140))
@@ -267,26 +322,75 @@ def main():
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
                     running = False
-# -----------------------------------------------------------------
+
             elif in_menu == 2:
                 screen.fill((255, 255, 255))
                 manager3.draw_ui(screen)
+                font = pygame.font.Font("data\Comic_CAT.otf", 35)
+                text = font.render('Таблица лидеров', True, (0, 0, 0))
+                text_h = text.get_height()
+                text_x = 65
+                text_y = 20
+                screen.blit(text, (text_x, text_y))
+                leaders_list = sorted(get_leaders("map"), key=lambda x: x[2])
+                font = pygame.font.Font("data\Comic_CAT.otf", 20)
+
+                text_y = 80
+                leader_text_place = 1
+                for i in leaders_list:
+                    text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
+                    text_h = text.get_height()
+                    text_x = 70
+                    screen.blit(text, (text_x, text_y))
+                    text_y += 28
+                    leader_text_place += 1
+
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.USEREVENT:
                     if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                         if event.ui_element == back2:
                             in_menu = 1
-# ----------------------------------------------------------------
+
+            elif in_menu == 3:
+                screen.fill((255, 255, 255))
+                manager3.draw_ui(screen)
+                font = pygame.font.Font("data\Comic_CAT.otf", 35)
+                text = font.render('Таблица лидеров', True, (0, 0, 0))
+                text_h = text.get_height()
+                text_x = 65
+                text_y = 20
+                screen.blit(text, (text_x, text_y))
+                leaders_list = sorted(get_leaders("map2"), key=lambda x: x[2])
+                font = pygame.font.Font("data\Comic_CAT.otf", 20)
+
+                text_y = 80
+                leader_text_place = 1
+                for i in leaders_list:
+                    text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
+                    text_h = text.get_height()
+                    text_x = 70
+                    screen.blit(text, (text_x, text_y))
+                    text_y += 28
+                    leader_text_place += 1
+
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.USEREVENT:
+                    if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                        if event.ui_element == back2:
+                            in_menu = 1
+
             manager.process_events(event)
             manager2.process_events(event)
-            manager3.process_events(event)  # !
+            manager3.process_events(event)
+
             if game != 0:
                 if game.check_win() is True:
                     manager2.draw_ui(screen)
         manager.update(time_delta)
         manager2.update(time_delta)
-        manager3.update(time_delta)  # !
+        manager3.update(time_delta)
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
