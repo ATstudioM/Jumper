@@ -221,17 +221,19 @@ def update_leaders(level_name: str, player_name: str, jumps_count: int):
 
 
 def get_leaders(level_name: str) -> list:
-    base_conn = sqlite3.connect("data/leaders.db")
-    base_cursor = base_conn.cursor()
-    base_players = "SELECT * FROM jump_leaders WHERE level_name='" + level_name + "'"
-    base_cursor.execute(base_players)
-    leaders_main = base_cursor.fetchall()
-    if len(leaders_main) >= 15:
-        leaders_main = leaders_main[0:14]
-    elif not leaders_main:
-        pass
-    return leaders_main
-
+    try:
+        base_conn = sqlite3.connect("data/leaders.db")
+        base_cursor = base_conn.cursor()
+        base_players = "SELECT * FROM jump_leaders WHERE level_name='" + level_name + "'"
+        base_cursor.execute(base_players)
+        leaders_main = base_cursor.fetchall()
+        if len(leaders_main) >= 15:
+            leaders_main = leaders_main[0:14]
+        elif not leaders_main:
+            pass
+        return leaders_main
+    except:
+        return []
 
 def main():
     global loading, in_menu, skin, jumps, name
@@ -332,19 +334,22 @@ def main():
                 text_x = 65
                 text_y = 20
                 screen.blit(text, (text_x, text_y))
-                leaders_list = sorted(get_leaders("map"), key=lambda x: x[2])
-                font = pygame.font.Font("data\Comic_CAT.otf", 20)
-
-                text_y = 80
-                leader_text_place = 1
-                for i in leaders_list:
-                    text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
-                    text_h = text.get_height()
-                    text_x = 70
-                    screen.blit(text, (text_x, text_y))
-                    text_y += 28
-                    leader_text_place += 1
-
+                leaders_list = get_leaders("map")
+                try:
+                    leaders_list.sort(key=lambda x: x[2])
+                    font = pygame.font.Font("data\Comic_CAT.otf", 20)
+                    text_y = 80
+                    leader_text_place = 1
+                    if leaders_list:
+                        for i in leaders_list:
+                            text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
+                            text_h = text.get_height()
+                            text_x = 70
+                            screen.blit(text, (text_x, text_y))
+                            text_y += 28
+                            leader_text_place += 1
+                except:
+                    pass
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.USEREVENT:
@@ -361,19 +366,24 @@ def main():
                 text_x = 65
                 text_y = 20
                 screen.blit(text, (text_x, text_y))
-                leaders_list = sorted(get_leaders("map2"), key=lambda x: x[2])
                 font = pygame.font.Font("data\Comic_CAT.otf", 20)
 
-                text_y = 80
-                leader_text_place = 1
-                for i in leaders_list:
-                    text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
-                    text_h = text.get_height()
-                    text_x = 70
-                    screen.blit(text, (text_x, text_y))
-                    text_y += 28
-                    leader_text_place += 1
-
+                leaders_list = get_leaders("map2")
+                try:
+                    leaders_list.sort(key=lambda x: x[2])
+                    font = pygame.font.Font("data\Comic_CAT.otf", 20)
+                    text_y = 80
+                    leader_text_place = 1
+                    if leaders_list:
+                        for i in leaders_list:
+                            text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
+                            text_h = text.get_height()
+                            text_x = 70
+                            screen.blit(text, (text_x, text_y))
+                            text_y += 28
+                            leader_text_place += 1
+                except:
+                    pass
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.USEREVENT:
