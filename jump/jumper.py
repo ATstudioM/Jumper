@@ -1,11 +1,16 @@
+# Динозавры взяты отсюда: https://arks.itch.io/dino-characters
+# Террейн отсюда стыбзил: https://pixelfrog-assets.itch.io/pixel-adventure-1
+# А вот и кастомный шрифт: https://fonts-online.ru/fonts/comic-cat/download
+
 import pygame
-# import os
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 400, 600
 FPS = 30
 TILE_SIZE = 20
 MOVE_EVENT_TYPE = 30
 counter = 4
+all_sprites = pygame.sprite.Group()
+jumps = 0
 
 
 class Map:
@@ -21,13 +26,16 @@ class Map:
         self.free_tiles = free_tile
         self.finish_tile = finish_tile
 
-    def render(self, screen):
-        colors = {0: (255, 255, 255, 200), 1: (0, 0, 0), 2: (255, 0, 0)}
+    def render(self):
+        colors = {0: 'brown.png', 1: 'block.png', 2: 'grass.png', 3: 'green.png'}
         for y in range(self.height):
             for x in range(self.width):
-                rect = pygame.Rect(x * self.tile_size, y * self.tile_size,
-                                   self.tile_size, self.tile_size)
-                screen.fill(colors[self.get_tile_id((x, y))], rect)
+                background = pygame.sprite.Sprite()
+                background.image = pygame.image.load('data/' + (colors[self.get_tile_id((x, y))]))
+                background.rect = background.image.get_rect()
+                background.rect.x = x * 20
+                background.rect.y = y * 20
+                all_sprites.add(background)
 
     def get_tile_id(self, position):
         return self.map[position[1]][position[0]]
@@ -78,7 +86,7 @@ class Game:
             self.hero.set_position((next_x, next_y))
 
     def move_hero(self):
-        global counter
+        global counter, jumps
         next_x, next_y = self.hero.get_position()
         if self.lab.is_free((next_x, next_y - 1)) and counter < 4:
             counter += 1
@@ -87,30 +95,60 @@ class Game:
             counter = 0
             if self.lab.is_free((next_x, next_y - 1)) and counter < 4:
                 counter += 1
+                jumps += 1
                 self.hero.set_position((next_x, next_y - 1))
         elif self.lab.is_free((next_x, next_y + 1)):
             counter = 5
             self.hero.set_position((next_x, next_y + 1))
 
+    def check_win(self):
+        return str(self.lab.get_tile_id(self.hero.get_position())) == '3'
+
+
+def show_message(screen, message, message2):
+    font = pygame.font.Font("data\Comic_CAT.otf", 30)
+    text = font.render(message, True, (255, 255, 255))
+    text_w = text.get_width()
+    text_h = text.get_height()
+    text_x = WINDOW_WIDTH // 2 - text_w // 2
+    text_y = WINDOW_HEIGHT // 2 - text_h // 2
+    pygame.draw.rect(screen, (252, 202, 78), (text_x - 200, text_y - 10, text_w + 400, text_h + 50))
+    screen.blit(text, (text_x, text_y))
+    font = pygame.font.Font("data\Comic_CAT.otf", 30)
+    text = font.render(message2, True, (255, 255, 255))
+    text_y = text_y + 30
+    text_x = text_x - 30
+    screen.blit(text, (text_x, text_y))
+
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
-    hero = Hero("data/DinoSprites_doux.gif", (13, 28))
-    map = Map('data/map.txt', [0, 2], 2)
+    hero = Hero("data/DinoSprites_doux.gif", (10, 28))
+    map = Map('data/map.txt', [0, 3], 3)
     game = Game(map, hero)
+    map.render()
     clock = pygame.time.Clock()
     running = True
-    pygame.time.set_timer(MOVE_EVENT_TYPE, 200)
+    pygame.time.set_timer(MOVE_EVENT_TYPE, 100)
+    game_over = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == MOVE_EVENT_TYPE:
+            if game.check_win():
+                game_over = True
+                screen.fill((255, 255, 255))
+                all_sprites.draw(screen)
+                hero.render(screen)
+                show_message(screen, "Вы достигли вершины!", f"Это заняло {jumps} прыжка(ов)!")
+            elif event.type == MOVE_EVENT_TYPE:
                 game.move_hero()
-        game.update_hero()
-        map.render(screen)
-        hero.render(screen)
+        if not game_over:
+            screen.fill((255, 255, 255))
+            all_sprites.draw(screen)
+            game.update_hero()
+            hero.render(screen)
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
