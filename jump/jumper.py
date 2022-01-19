@@ -3,7 +3,11 @@
 # А вот и кастомный шрифт: https://fonts-online.ru/fonts/comic-cat/download
 
 import pygame
+import pygame_gui
+import os
 
+pygame.init()
+pygame.display.set_caption("Jumper")
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 400, 600
 FPS = 30
 TILE_SIZE = 20
@@ -11,6 +15,27 @@ MOVE_EVENT_TYPE = 30
 counter = 4
 all_sprites = pygame.sprite.Group()
 jumps = 0
+in_menu = True
+manager = pygame_gui.UIManager((800, 600))
+fullname = os.path.join('data/logo.png')
+image = pygame.image.load(fullname)
+
+
+level = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
+    options_list=['Первый уровень', 'Второй уровень', 'Третий уровень'],
+    starting_option='Первый уровень',
+    relative_rect=pygame.Rect((100, 200), (200, 50)),
+    manager=manager)
+
+rules = pygame_gui.elements.ui_button.UIButton(
+    relative_rect=pygame.Rect((100, 275), (200, 50)),
+    text='Правила',
+    manager=manager)
+
+play = pygame_gui.elements.ui_button.UIButton(
+    relative_rect=pygame.Rect((100, 350), (200, 50)),
+    text='Играть!',
+    manager=manager)
 
 
 class Map:
@@ -106,6 +131,7 @@ class Game:
 
 
 def show_message(screen, message, message2):
+    global jumps
     font = pygame.font.Font("data\Comic_CAT.otf", 30)
     text = font.render(message, True, (255, 255, 255))
     text_w = text.get_width()
@@ -117,38 +143,47 @@ def show_message(screen, message, message2):
     font = pygame.font.Font("data\Comic_CAT.otf", 30)
     text = font.render(message2, True, (255, 255, 255))
     text_y = text_y + 30
-    text_x = text_x - 30
+    text_x = text_x - 40
     screen.blit(text, (text_x, text_y))
 
 
 def main():
-    pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
     hero = Hero("data/DinoSprites_doux.gif", (10, 28))
     map = Map('data/map.txt', [0, 3], 3)
     game = Game(map, hero)
     map.render()
     clock = pygame.time.Clock()
+    time_delta = clock.tick(60) / 1000.0
     running = True
     pygame.time.set_timer(MOVE_EVENT_TYPE, 100)
     game_over = False
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if game.check_win():
-                game_over = True
+            if in_menu is not True:
+                if event.type == pygame.QUIT:
+                    running = False
+                if game.check_win():
+                    game_over = True
+                    screen.fill((255, 255, 255))
+                    all_sprites.draw(screen)
+                    hero.render(screen)
+                    show_message(screen, "Вы достигли вершины!", f"Это заняло {jumps} прыжка(ов)!")
+                elif event.type == MOVE_EVENT_TYPE:
+                    game.move_hero()
+                if not game_over:
+                    screen.fill((255, 255, 255))
+                    all_sprites.draw(screen)
+                    game.update_hero()
+                    hero.render(screen)
+            else:
                 screen.fill((255, 255, 255))
-                all_sprites.draw(screen)
-                hero.render(screen)
-                show_message(screen, "Вы достигли вершины!", f"Это заняло {jumps} прыжка(ов)!")
-            elif event.type == MOVE_EVENT_TYPE:
-                game.move_hero()
-        if not game_over:
-            screen.fill((255, 255, 255))
-            all_sprites.draw(screen)
-            game.update_hero()
-            hero.render(screen)
+                manager.draw_ui(screen)
+                screen.blit(image, (20, - 50))
+                if event.type == pygame.QUIT:
+                    running = False
+            manager.process_events(event)
+        manager.update(time_delta)
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
