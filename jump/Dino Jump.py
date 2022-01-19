@@ -6,19 +6,15 @@
 import pygame
 import pygame_gui
 import os
-from random import randint
 
 pygame.init()
-pygame.display.set_caption("Dino Jump")
+pygame.display.set_caption("Jumper")
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 400, 600
 FPS = 30
 TILE_SIZE = 20
 MOVE_EVENT_TYPE = 30
-CHANGE_BACKGROUND = 29
 counter = 4
-hm = 0
 all_sprites = pygame.sprite.Group()
-background_sprites = pygame.sprite.Group()
 jumps = 0
 in_menu = 1
 manager = pygame_gui.UIManager((400, 600))
@@ -73,49 +69,6 @@ back = pygame_gui.elements.ui_button.UIButton(
     relative_rect=pygame.Rect((100, 375), (200, 50)),
     text='В главное меню',
     manager=manager2)
-
-
-class Background:
-    def __init__(self):
-        self.board = []
-        with open("data/background.txt") as input_file:
-            for line in input_file:
-                self.board.append(list(map(int, line.split())))
-        self.height = len(self.board)
-        self.width = len(self.board[0])
-        self.tile_size = TILE_SIZE
-
-    def render(self):
-        colors = {0: 'brown.png', 1: 'block.png'}
-        for y in range(self.height):
-            for x in range(self.width):
-                background = pygame.sprite.Sprite()
-                background.image = pygame.image.load('data/' + (colors[self.get_tile_id((x, y))]))
-                background.rect = background.image.get_rect()
-                background.rect.x = x * 20
-                background.rect.y = y * 20
-                background_sprites.add(background)
-
-    def get_tile_id(self, position):
-        return self.board[position[1]][position[0]]
-
-    def change(self):
-        y = randint(0, 19)
-        x = randint(0, 29)
-        for i in range(29):
-            if self.board[i][y] == 1:
-                self.board[i][y] = 0
-            else:
-                self.board[i][y] = 1
-        for i in range(19):
-            if self.board[x][i] == 1:
-                self.board[x][i] = 0
-            else:
-                self.board[x][i] = 1
-        if self.board[x][y] == 1:
-            self.board[x][y] = 0
-        else:
-            self.board[x][y] = 1
 
 
 class Map:
@@ -228,17 +181,14 @@ def show_message(screen, message, message2):
 
 
 def main():
-    global loading, in_menu, skin, jumps, name, hm
+    global loading, in_menu, skin, jumps, name
     screen = pygame.display.set_mode(WINDOW_SIZE)
     hero = 0
     game = 0
     clock = pygame.time.Clock()
-    background = Background()
-    background.render()
     time_delta = clock.tick(60) / 1000.0
     running = True
     pygame.time.set_timer(MOVE_EVENT_TYPE, 100)
-    pygame.time.set_timer(CHANGE_BACKGROUND, 5000)
     game_over = False
     while running:
         for event in pygame.event.get():
@@ -290,13 +240,11 @@ def main():
                             game = Game(map, hero)
                             game.render(screen)
                             in_menu = 0
-                            hm = 0
                     if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                         name = event.text
+                        print(name)
+                screen.fill((255, 255, 255))
                 manager.draw_ui(screen)
-                if hm == 0:
-                    background_sprites.draw(screen)
-                    hm = 1
                 screen.blit(image, (20, -140))
                 font = pygame.font.Font("data\Comic_CAT.otf", 15)
                 text = font.render('Введите имя (тык Enter после ввода)', True, (0, 0, 0))
