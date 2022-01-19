@@ -8,7 +8,7 @@ import pygame_gui
 import os
 
 pygame.init()
-pygame.display.set_caption("Jumper")
+pygame.display.set_caption("Dino Jump")
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 400, 600
 FPS = 30
 TILE_SIZE = 20
@@ -199,7 +199,13 @@ def main():
                     game_over = True
                     all_sprites.draw(screen)
                     hero.render(screen)
-                    show_message(screen, "Вы достигли финиша!", f"Это заняло {jumps} прыжка(ов)!")
+                    if str(jumps)[-1] == '1' and str(jumps)[-2] != '1':
+                        say = 'прыжок'
+                    elif str(jumps)[-1] in ['2', '3', '4']:
+                        say = 'прыжка'
+                    else:
+                        say = 'прыжков'
+                    show_message(screen, "Вы достигли финиша!", f"Это заняло {jumps} {say}!")
                     if event.type == pygame.USEREVENT:
                         if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                             if event.ui_element == back:
