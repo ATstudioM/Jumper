@@ -19,6 +19,7 @@ jumps = 0
 in_menu = 1
 manager = pygame_gui.UIManager((400, 600))
 manager2 = pygame_gui.UIManager((400, 600))
+manager3 = pygame_gui.UIManager((400, 600))  # !
 fullname = os.path.join('data/logo.png')
 image = pygame.image.load(fullname)
 loading = 'data/map.txt'
@@ -54,7 +55,6 @@ dino = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
     relative_rect=pygame.Rect((100, 225), (200, 50)),
     manager=manager)
 
-
 top = pygame_gui.elements.ui_button.UIButton(
     relative_rect=pygame.Rect((100, 450), (200, 50)),
     text='Топ первого уровня',
@@ -69,6 +69,11 @@ back = pygame_gui.elements.ui_button.UIButton(
     relative_rect=pygame.Rect((100, 375), (200, 50)),
     text='В главное меню',
     manager=manager2)
+
+back2 = pygame_gui.elements.ui_button.UIButton(
+    relative_rect=pygame.Rect((100, 525), (200, 50)),
+    text='В главное меню',
+    manager=manager3)
 
 
 class Map:
@@ -246,6 +251,8 @@ def main():
                             game = Game(map, hero)
                             game.render(screen)
                             in_menu = 0
+                        if event.ui_element == top:
+                            in_menu = 2
                     if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                         name = event.text
                         print(name)
@@ -260,13 +267,26 @@ def main():
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
                     running = False
+# -----------------------------------------------------------------
+            elif in_menu == 2:
+                screen.fill((255, 255, 255))
+                manager3.draw_ui(screen)
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.USEREVENT:
+                    if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                        if event.ui_element == back2:
+                            in_menu = 1
+# ----------------------------------------------------------------
             manager.process_events(event)
             manager2.process_events(event)
+            manager3.process_events(event)  # !
             if game != 0:
                 if game.check_win() is True:
                     manager2.draw_ui(screen)
         manager.update(time_delta)
         manager2.update(time_delta)
+        manager3.update(time_delta)  # !
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
