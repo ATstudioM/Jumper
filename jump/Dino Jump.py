@@ -3,7 +3,6 @@
 # А вот и кастомный шрифт: https://fonts-online.ru/fonts/comic-cat/download
 # Логотип сделан мной лично (Адель Матыгуллин :)
 
-import sqlite3
 import pygame
 import pygame_gui
 import os
@@ -20,8 +19,7 @@ jumps = 0
 in_menu = 1
 manager = pygame_gui.UIManager((400, 600))
 manager2 = pygame_gui.UIManager((400, 600))
-manager3 = pygame_gui.UIManager((400, 600))
-
+manager3 = pygame_gui.UIManager((400, 600))  # !
 fullname = os.path.join('data/logo.png')
 image = pygame.image.load(fullname)
 loading = 'data/map.txt'
@@ -32,50 +30,50 @@ name = 'No name'
 # loading - имя вскрываемого файла. Map, map2 - первый и второй уровни соответственно
 
 name_enter = pygame_gui.elements.UITextEntryLine(
-    relative_rect=pygame.Rect((100, 100), (200, 25)),
+    relative_rect=pygame.Rect((100, 110), (200, 25)),
     manager=manager)
 
 level = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
     options_list=['Первый уровень', 'Второй уровень'],
     starting_option='Первый уровень',
-    relative_rect=pygame.Rect((100, 125), (200, 50)),
+    relative_rect=pygame.Rect((100, 150), (200, 50)),
     manager=manager)
 
 rules = pygame_gui.elements.ui_button.UIButton(
-    relative_rect=pygame.Rect((100, 320), (200, 50)),
+    relative_rect=pygame.Rect((100, 375), (200, 50)),
     text='Правила',
     manager=manager)
 
 play = pygame_gui.elements.ui_button.UIButton(
-    relative_rect=pygame.Rect((100, 255), (200, 50)),
+    relative_rect=pygame.Rect((100, 300), (200, 50)),
     text='Играть!',
     manager=manager)
 
 dino = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
     options_list=['Синий дино', "Зелёный дино", "Жёлтый дино", "Красный дино"],
     starting_option='Синий дино',
-    relative_rect=pygame.Rect((100, 190), (200, 50)),
+    relative_rect=pygame.Rect((100, 225), (200, 50)),
     manager=manager)
 
 top = pygame_gui.elements.ui_button.UIButton(
-    relative_rect=pygame.Rect((100, 385), (200, 50)),
+    relative_rect=pygame.Rect((100, 450), (200, 50)),
     text='Топ первого уровня',
     manager=manager)
 
 top2 = pygame_gui.elements.ui_button.UIButton(
-    relative_rect=pygame.Rect((100, 450), (200, 50)),
+    relative_rect=pygame.Rect((100, 525), (200, 50)),
     text='Топ второго уровня',
     manager=manager)
-
-back2 = pygame_gui.elements.ui_button.UIButton(
-    relative_rect=pygame.Rect((100, 525), (200, 50)),
-    text='В главное меню',
-    manager=manager3)
 
 back = pygame_gui.elements.ui_button.UIButton(
     relative_rect=pygame.Rect((100, 375), (200, 50)),
     text='В главное меню',
     manager=manager2)
+
+back2 = pygame_gui.elements.ui_button.UIButton(
+    relative_rect=pygame.Rect((100, 525), (200, 50)),
+    text='В главное меню',
+    manager=manager3)
 
 
 class Map:
@@ -187,55 +185,6 @@ def show_message(screen, message, message2):
     screen.blit(text, (text_x, text_y))
 
 
-def update_leaders(level_name: str, player_name: str, jumps_count: int):
-    base_conn = sqlite3.connect("data/leaders.db")
-    base_cursor = base_conn.cursor()
-    base_cursor.execute("""CREATE TABLE IF NOT EXISTS jump_leaders(level_name text, player_name text, jumps_count
-    int)""")
-    base_values = (str(level_name), str(player_name), int(jumps_count))
-    base_querry = "select * from jump_leaders"
-    base_cursor.execute(base_querry)
-    base_players = base_cursor.fetchall()
-    curr_player = ()
-
-    # это конечно, &*$!ец, но вариант с WHERE у меня почему-то не работал (
-    for i in base_players:
-        if str(i[1]) == player_name and str(i[0]) == level_name:
-            curr_player = i
-            break
-
-    if curr_player:
-        if jumps_count < int(curr_player[2]):
-            # А тут работает, вот это приколы
-            # Цыганские фокусы при разработке )))
-            base_cursor.execute("UPDATE jump_leaders SET jumps_count=" + str(
-                jumps_count) + " WHERE player_name='" + player_name + "' AND level_name='" + level_name + "'")
-            base_conn.commit()
-        return False
-    else:
-
-        base_cursor.execute("INSERT INTO jump_leaders VALUES(?, ?, ?);", base_values)
-        base_conn.commit()
-    base_cursor.close()
-    base_conn.close()
-
-
-def get_leaders(level_name: str) -> list:
-    try:
-        base_conn = sqlite3.connect("data/leaders.db")
-        base_cursor = base_conn.cursor()
-        base_players = "SELECT * FROM jump_leaders WHERE level_name='" + level_name + "'"
-        base_cursor.execute(base_players)
-        leaders_main = base_cursor.fetchall()
-        if len(leaders_main) >= 15:
-            leaders_main = leaders_main[0:14]
-        elif not leaders_main:
-            pass
-        return leaders_main
-    except:
-        return []
-
-
 def main():
     global loading, in_menu, skin, jumps, name
     screen = pygame.display.set_mode(WINDOW_SIZE)
@@ -250,14 +199,7 @@ def main():
         for event in pygame.event.get():
             if in_menu == 0:
                 if event.type == pygame.QUIT:
-                    confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (75, 200)),
-                        manager=manager,
-                        window_title='Подтверждение',
-                        action_long_desc="Уверены?",
-                        action_short_name='OK',
-                        blocking=True
-                    )
+                    running = False
                 if game.check_win():
                     game_over = True
                     all_sprites.draw(screen)
@@ -269,11 +211,9 @@ def main():
                     else:
                         say = 'прыжков'
                     show_message(screen, "Вы достигли финиша!", f"Это заняло {jumps} {say}!")
-                    lvl_name = loading[5:-4]
                     if event.type == pygame.USEREVENT:
                         if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                             if event.ui_element == back:
-                                update_leaders(lvl_name, name, jumps)
                                 game_over = False
                                 in_menu = 1
                                 jumps = 0
@@ -302,13 +242,7 @@ def main():
                             elif str(event.text) == 'Красный дино':
                                 skin = "data/DinoSprites_mort.gif"
                     if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                        if event.ui_element == top2:
-                            in_menu = 3
-                        elif event.ui_element == rules:
-                            in_menu = 4
-                        elif event.ui_element == top:
-                            in_menu = 2
-                        elif event.ui_element == play:
+                        if event.ui_element == play:
                             map = Map(loading, [0, 3], 3)
                             if loading == 'data/map.txt':
                                 hero = Hero(skin, (10, 28))
@@ -317,14 +251,11 @@ def main():
                             game = Game(map, hero)
                             game.render(screen)
                             in_menu = 0
-
+                        if event.ui_element == top:
+                            in_menu = 2
                     if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                         name = event.text
                         print(name)
-
-                    if event.user_type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-                        running = False
-
                 screen.fill((255, 255, 255))
                 manager.draw_ui(screen)
                 screen.blit(image, (20, -140))
@@ -332,177 +263,30 @@ def main():
                 text = font.render('Введите имя (тык Enter после ввода)', True, (0, 0, 0))
                 text_h = text.get_height()
                 text_x = 80
-                text_y = 100 - text_h - 2
+                text_y = 110 - text_h - 2
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
-                    confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (75, 200)),
-                        manager=manager,
-                        window_title='Подтверждение',
-                        action_long_desc="Уверены?",
-                        action_short_name='OK',
-                        blocking=True
-                    )
-
+                    running = False
+# -----------------------------------------------------------------
             elif in_menu == 2:
                 screen.fill((255, 255, 255))
                 manager3.draw_ui(screen)
-                font = pygame.font.Font("data\Comic_CAT.otf", 35)
-                text = font.render('Таблица лидеров', True, (0, 0, 0))
-                text_x = 65
-                text_y = 20
-                screen.blit(text, (text_x, text_y))
-                leaders_list = get_leaders("map")
-                try:
-                    leaders_list.sort(key=lambda x: x[2])
-                    font = pygame.font.Font("data\Comic_CAT.otf", 20)
-                    text_y = 80
-                    leader_text_place = 1
-                    if leaders_list:
-                        for i in leaders_list:
-                            text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
-                            text_x = 70
-                            screen.blit(text, (text_x, text_y))
-                            text_y += 28
-                            leader_text_place += 1
-                except:
-                    pass
                 if event.type == pygame.QUIT:
-                    confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
-                        manager=manager,
-                        window_title='Подтверждение',
-                        action_long_desc="Уверены?",
-                        action_short_name='OK',
-                        blocking=True
-                    )
+                    running = False
                 if event.type == pygame.USEREVENT:
-                    if event.user_type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-                        running = False
                     if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                         if event.ui_element == back2:
                             in_menu = 1
-# *Ворчит*
-# А вот это мои фокусы:
-            elif in_menu == 3:
-                screen.fill((255, 255, 255))
-                manager3.draw_ui(screen)
-                font = pygame.font.Font("data\Comic_CAT.otf", 35)
-                text = font.render('Таблица лидеров', True, (0, 0, 0))
-                text_x = 65
-                text_y = 20
-                screen.blit(text, (text_x, text_y))
-                leaders_list = get_leaders("map2")
-                try:
-                    leaders_list.sort(key=lambda x: x[2])
-                    font = pygame.font.Font("data\Comic_CAT.otf", 20)
-                    text_y = 80
-                    leader_text_place = 1
-                    if leaders_list:
-                        for i in leaders_list:
-                            text = font.render(f'{leader_text_place}) {i[1]} прыгнул {i[2]} раз', True, (0, 0, 0))
-                            text_x = 70
-                            screen.blit(text, (text_x, text_y))
-                            text_y += 28
-                            leader_text_place += 1
-                except:
-                    pass
-
-                if event.type == pygame.QUIT:
-                    confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
-                        manager=manager,
-                        window_title='Подтверждение',
-                        action_long_desc="Уверены?",
-                        action_short_name='OK',
-                        blocking=True
-                    )
-                if event.type == pygame.USEREVENT:
-                    if event.user_type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-                        running = False
-                    if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                        if event.ui_element == back2:
-                            in_menu = 1
-
-            elif in_menu == 4:
-                screen.fill((255, 255, 255))
-                manager3.draw_ui(screen)
-                font = pygame.font.Font("data\Comic_CAT.otf", 20)
-                text = font.render('''Цель: Достичь зеленой клетки
-                ''', True, (0, 0, 0))
-                text_x = 20
-                text_y = 20
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''Метод достижения: Перемещение c''', True, (0, 0, 0))
-                text_y = 70
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''помощью кнопок "A" "D" или стрелок
-                ''', True, (0, 0, 0))
-                text_y = 100
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''Смысл многочисленных попыток:''', True, (0, 0, 0))
-                text_y = 150
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''Получение первого места в топах
-                ''', True, (0, 0, 0))
-                text_y = 180
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''Как туда попасть: Пишешь свой ник,''', True, (0, 0, 0))
-                text_y = 230
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''берёшь динозавра на свой выбор,''', True, (0, 0, 0))
-                text_y = 260
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''выбираешь уровень (второй легче!),''', True, (0, 0, 0))
-                text_y = 290
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''и начинаешь вырываться в топ!
-                ''', True, (0, 0, 0))
-                text_y = 320
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''Слушать побольше:''', True, (0, 0, 0))
-                text_y = 370
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''twenty one pilots |-/''', True, (0, 0, 0))
-                text_y = 400
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''grandson ××''', True, (0, 0, 0))
-                text_y = 430
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''big baby tape''', True, (0, 0, 0))
-                text_y = 460
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''soda luv''', True, (0, 0, 0))
-                text_y = 490
-                screen.blit(text, (text_x, text_y))
-                text = font.render('''kizaru''', True, (0, 0, 0))
-                text_y = 520
-                screen.blit(text, (text_x, text_y))
-                if event.type == pygame.QUIT:
-                    confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
-                        manager=manager,
-                        window_title='Подтверждение',
-                        action_long_desc="Уверены?",
-                        action_short_name='OK',
-                        blocking=True
-                    )
-                if event.type == pygame.USEREVENT:
-                    if event.user_type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-                        running = False
-                    if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                        if event.ui_element == back2:
-                            in_menu = 1
-
+# ----------------------------------------------------------------
             manager.process_events(event)
             manager2.process_events(event)
-            manager3.process_events(event)
+            manager3.process_events(event)  # !
             if game != 0:
-                if game_over is True:
+                if game.check_win() is True:
                     manager2.draw_ui(screen)
         manager.update(time_delta)
         manager2.update(time_delta)
-        manager3.update(time_delta)
+        manager3.update(time_delta)  # !
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
@@ -510,40 +294,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# А почему бы не написать сюда текст песни Коржа? )))
-
-# Лес с деревьями до луны
-# Дождь в лоб мелкими каплями
-# Прогонит гостей, и среди всех своих
-# Остались лишь самые стойкие
-# На мятой траве, устеленной покрывалами
-# Вокруг всё выпито, скурено
-# Девчонка с глазами пьяными
-# Ответь, что ты задумала?
-# Когда я шёл на дым костра в полной луне
-# По глухим местам на шорох теней
-# И тут же, на мой крик друзья кричали в ответ
-# Впереди сверкал пламенный свет. Эй
-# Правнуки партизан в родной стихии
-# Пробираются в руках с ветками сухими
-# Ноги колет шишками, не одеть сандали
-# Пьяные, счастливые — все по поступали
-# Идейные, со взглядами
-# Страну поднять продуманы планы
-# А в ночном лесу, без сигарет
-# Все ждут, кого-то отправили
-# Когда я шёл на дым костра при полной луне
-# По глухим местам на шорох теней
-# И тут же, на мой крик друзья кричали в ответ
-# Впереди сверкал пламенный свет. Эй
-# Где же вы, мои друзья?
-# С кем мечтали, с кем хотели
-# Не теряться никогда, оставаться в теме
-# Деньги замотали всех. Деньги заменили воздух
-# И люди рядом, но уже не те
-# Так знай, что никогда не поздно
-# Иди на дым костра, в полной луне
-# К тем глухим местам — шорох теней
-# И будут там твои друзья — радостный смех
-# Обними меня, пламенный свет. Эй
