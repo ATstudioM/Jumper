@@ -17,14 +17,19 @@ counter = 4
 all_sprites = pygame.sprite.Group()
 jumps = 0
 in_menu = 1
+which_skin = 1
 manager = pygame_gui.UIManager((400, 600))
 manager2 = pygame_gui.UIManager((400, 600))
 manager3 = pygame_gui.UIManager((400, 600))
-
+blue = ['data/blue1.png', 'data/blue2.png', 'data/blue3.png', 'data/blue4.png']
+red = ['data/red1.png', 'data/red2.png', 'data/red3.png', 'data/red4.png']
+yellow = ['data/yellow1.png', 'data/yellow2.png', 'data/yellow3.png', 'data/yellow4.png']
+green = ['data/green1.png', 'data/green2.png', 'data/green3.png', 'data/green4.png']
+dinosaur = 'blue'
 fullname = os.path.join('data/logo.png')
 image = pygame.image.load(fullname)
 loading = 'data/map.txt'
-skin = "data/DinoSprites_doux.gif"
+skin = blue[0]
 name = 'No name'
 # name - имя пользователя
 # jumps - количество прыжков
@@ -109,9 +114,9 @@ class Map:
 
 
 class Hero:
-    def __init__(self, pic, position):
+    def __init__(self, position):
         self.x, self.y = position
-        self.image = pygame.image.load(f"{pic}")
+        self.image = pygame.image.load(skin)
         self.delay = 200
 
     def get_position(self):
@@ -121,6 +126,16 @@ class Hero:
         self.x, self.y = position
 
     def render(self, screen):
+        global skin
+        if dinosaur == 'blue':
+            skin = blue[which_skin - 1]
+        if dinosaur == 'red':
+            skin = red[which_skin - 1]
+        if dinosaur == 'green':
+            skin = green[which_skin - 1]
+        if dinosaur == 'yellow':
+            skin = yellow[which_skin - 1]
+        self.image = pygame.image.load(skin)
         delta = (self.image.get_width() - TILE_SIZE) // 2
         screen.blit(self.image, (self.x * TILE_SIZE - delta, self.y * TILE_SIZE - delta))
 
@@ -136,29 +151,54 @@ class Game:
         self.hero.render(screen)
 
     def update_hero(self):
+        global which_skin
         next_x, next_y = self.hero.get_position()
         if pygame.key.get_pressed()[pygame.K_a]:
             next_x -= 1
+            if which_skin == 1:
+                which_skin = 3
+            elif which_skin == 2:
+                which_skin = 4
         elif pygame.key.get_pressed()[pygame.K_d]:
             next_x += 1
+            if which_skin == 3:
+                which_skin = 1
+            elif which_skin == 4:
+                which_skin = 2
         elif pygame.key.get_pressed()[pygame.K_LEFT]:
             next_x -= 1
+            if which_skin == 1:
+                which_skin = 3
+            elif which_skin == 2:
+                which_skin = 4
         elif pygame.key.get_pressed()[pygame.K_RIGHT]:
             next_x += 1
+            if which_skin == 3:
+                which_skin = 1
+            elif which_skin == 4:
+                which_skin = 2
         if self.lab.is_free((next_x, next_y)):
             self.hero.set_position((next_x, next_y))
 
     def move_hero(self):
-        global counter, jumps
+        global counter, jumps, which_skin
         next_x, next_y = self.hero.get_position()
         if self.lab.is_free((next_x, next_y - 1)) and counter < 4:
             counter += 1
+            if which_skin == 1:
+                which_skin = 2
+            elif which_skin == 3:
+                which_skin = 4
             self.hero.set_position((next_x, next_y - 1))
         elif self.lab.is_free((next_x, next_y + 1)) is False:
             counter = 0
             if self.lab.is_free((next_x, next_y - 1)) and counter < 4:
                 counter += 1
                 jumps += 1
+                if which_skin == 2:
+                    which_skin = 1
+                elif which_skin == 4:
+                    which_skin = 3
                 self.hero.set_position((next_x, next_y - 1))
         elif self.lab.is_free((next_x, next_y + 1)):
             counter = 5
@@ -235,7 +275,7 @@ def get_leaders(level_name: str) -> list:
 
 
 def main():
-    global loading, in_menu, skin, jumps, name
+    global loading, in_menu, skin, jumps, name, dinosaur
     screen = pygame.display.set_mode(WINDOW_SIZE)
     hero = 0
     game = 0
@@ -248,14 +288,7 @@ def main():
         for event in pygame.event.get():
             if in_menu == 0:
                 if event.type == pygame.QUIT:
-                    confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (75, 200)),
-                        manager=manager,
-                        window_title='Подтверждение',
-                        action_long_desc="Уверены?",
-                        action_short_name='OK',
-                        blocking=True
-                    )
+                    running = False
                 if game.check_win():
                     game_over = True
                     all_sprites.draw(screen)
@@ -292,13 +325,13 @@ def main():
                                 loading = 'data/map2.txt'
                         elif event.ui_element == dino:
                             if str(event.text) == 'Синий дино':
-                                skin = "data/DinoSprites_doux.gif"
+                                dinosaur = 'blue'
                             elif str(event.text) == 'Зелёный дино':
-                                skin = "data/DinoSprites_vita.gif"
+                                dinosaur = 'green'
                             elif str(event.text) == 'Жёлтый дино':
-                                skin = "data/DinoSprites_tard.gif"
+                                dinosaur = 'yellow'
                             elif str(event.text) == 'Красный дино':
-                                skin = "data/DinoSprites_mort.gif"
+                                dinosaur = 'red'
                     if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                         if event.ui_element == top2:
                             in_menu = 3
@@ -309,9 +342,9 @@ def main():
                         elif event.ui_element == play:
                             map = Map(loading, [0, 3], 3)
                             if loading == 'data/map.txt':
-                                hero = Hero(skin, (10, 28))
+                                hero = Hero((10, 28))
                             else:
-                                hero = Hero(skin, (10, 1))
+                                hero = Hero((10, 1))
                             game = Game(map, hero)
                             game.render(screen)
                             in_menu = 0
@@ -334,7 +367,7 @@ def main():
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (75, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -367,7 +400,7 @@ def main():
                     pass
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -408,7 +441,7 @@ def main():
 
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -478,7 +511,7 @@ def main():
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
