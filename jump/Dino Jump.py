@@ -249,7 +249,7 @@ def main():
             if in_menu == 0:
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (75, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -334,7 +334,7 @@ def main():
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (75, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -367,7 +367,7 @@ def main():
                     pass
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -408,7 +408,7 @@ def main():
 
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
@@ -478,7 +478,7 @@ def main():
                 screen.blit(text, (text_x, text_y))
                 if event.type == pygame.QUIT:
                     confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-                        rect=pygame.Rect((250, 200), (300, 200)),
+                        rect=pygame.Rect((75, 200), (300, 200)),
                         manager=manager,
                         window_title='Подтверждение',
                         action_long_desc="Уверены?",
