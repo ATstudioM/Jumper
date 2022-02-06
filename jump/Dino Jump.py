@@ -2,7 +2,7 @@
 # Террейн отсюда стыбзил: https://pixelfrog-assets.itch.io/pixel-adventure-1
 # А вот и кастомный шрифт: https://fonts-online.ru/fonts/comic-cat/download
 # Логотип сделан мной лично (Адель Матыгуллин :)
-# Перед запуском программы в консоль pip install -r requirements.txt
+# Перед запуском программы pip install -r requirements.txt
 
 import sqlite3
 import pygame
